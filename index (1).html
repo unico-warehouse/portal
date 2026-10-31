@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNICO SHEIN Warehouse Portal</title>
+<style>
+  :root {
+    --bg:#f5f6f8; --surface:#fff; --border:#e4e6ea; --text:#111; --muted:#666; --faint:#999;
+    --side:#1a1a1a; --side-text:#ccc; --side-hover:#2a2a2a; --accent:#e91e63; --accent-h:#d81b60;
+    --tag-bg:#fce4ec; --tag-text:#c2185b; --tag2-bg:#eee; --tag2-text:#555; --shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg:#121316; --surface:#1c1e23; --border:#2e3138; --text:#ececec; --muted:#a0a4ad; --faint:#7d818a;
+    --side:#0b0c0e; --side-text:#b5b8bf; --side-hover:#1a1c20; --accent:#ff4081; --accent-h:#f50057;
+    --tag-bg:#3a1a27; --tag-text:#ff80ab; --tag2-bg:#2a2d33; --tag2-text:#b5b8bf; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; display:flex; height:100vh; overflow:hidden; background:var(--bg); color:var(--text); transition:background .2s,color .2s; }
+  .sidebar { width:264px; background:var(--side); color:var(--side-text); padding:20px 0 12px; flex-shrink:0; display:flex; flex-direction:column; overflow-y:auto; transition:transform .25s; z-index:20; }
+  .logo { padding:0 20px 20px; border-bottom:1px solid #2c2c2c; }
+  .logo h1 { font-size:22px; font-weight:700; color:#fff; letter-spacing:1px; }
+  .logo p { font-size:12px; color:#8a8a8a; margin-top:4px; }
+  .nav-section { padding:16px 0 8px 20px; font-size:11px; text-transform:uppercase; color:#777; letter-spacing:.5px; }
+  .nav-item { display:flex; align-items:center; padding:12px 20px; cursor:pointer; font-size:14px; gap:10px; transition:background .15s; }
+  .nav-item:hover { background:var(--side-hover); }
+  .nav-item.active { background:var(--accent); color:#fff; font-weight:600; }
+  .nav-item svg { width:18px; height:18px; flex-shrink:0; }
+  .nav-item .name { flex:1; }
+  .badge { font-size:11px; min-width:20px; text-align:center; padding:1px 7px; border-radius:10px; background:rgba(255,255,255,.12); }
+  .nav-item.active .badge { background:rgba(255,255,255,.28); }
+  .side-foot { margin-top:auto; padding:14px 16px 0; display:flex; flex-wrap:wrap; gap:8px; border-top:1px solid #2c2c2c; }
+  #loginBtn { flex-basis:100%; }
+  .side-foot button { flex:1; padding:8px; font-size:12px; border-radius:6px; border:1px solid #333; background:transparent; color:var(--side-text); cursor:pointer; }
+  .side-foot button:hover { background:var(--side-hover); }
+  .main { flex:1; display:flex; flex-direction:column; overflow:auto; min-width:0; }
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; position:sticky; top:0; z-index:5; }
+  .search { flex:1; min-width:200px; position:relative; }
+  .search svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--faint); }
+  input, select, .btn, .icon-btn { font-family:inherit; font-size:14px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:8px; }
+  .search input { width:100%; padding:10px 12px 10px 36px; }
+  input:focus, select:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+  select, .btn { padding:10px 12px; cursor:pointer; }
+  .icon-btn { width:40px; height:40px; cursor:pointer; font-size:17px; }
+  .icon-btn:hover, .btn:hover { background:var(--bg); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .btn.primary:hover { background:var(--accent-h); }
+  .menu-btn { display:none; }
+  [hidden] { display:none !important; }
+  .banner { background:#fff3cd; color:#664d03; padding:10px 24px; font-size:13px; text-align:center; border-bottom:1px solid #ecd98a; }
+  .content { flex:1; padding:40px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .page { display:none; width:100%; max-width:780px; flex-direction:column; align-items:center; }
+  .page.active { display:flex; animation:fade .2s; }
+  @keyframes fade { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+  .page h2 { font-size:28px; margin-bottom:8px; }
+  .subtitle { color:var(--muted); margin-bottom:28px; font-size:15px; }
+  .empty-box { border:1px dashed var(--border); border-radius:10px; padding:48px 40px; color:var(--faint); width:100%; max-width:440px; background:var(--surface); margin:0 auto; line-height:1.5; }
+  .list { width:100%; display:flex; flex-direction:column; gap:10px; text-align:left; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:14px; box-shadow:var(--shadow); transition:border-color .15s,transform .15s; }
+  .card:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .card .info { flex:1; min-width:0; }
+  .card .title { font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card .url { font-size:12px; color:var(--faint); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .meta { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .tag { font-size:11px; padding:2px 9px; border-radius:10px; background:var(--tag-bg); color:var(--tag-text); }
+  .tag.gray { background:var(--tag2-bg); color:var(--tag2-text); }
+  .card a.open { color:var(--accent); font-weight:600; font-size:13px; text-decoration:none; white-space:nowrap; }
+  .card a.open:hover { text-decoration:underline; }
+  .card .del { background:none; border:none; color:var(--faint); font-size:22px; cursor:pointer; line-height:1; }
+  .card .del:hover { color:#e53935; }
+  .card .edit { font-size:17px; }
+  .card .edit:hover { color:var(--accent); }
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:30; padding:16px; }
+  .overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; width:100%; max-width:440px; max-height:94vh; overflow:auto; }
+  .modal h3 { margin-bottom:12px; font-size:18px; }
+  .modal label { display:block; font-size:12px; color:var(--muted); margin:12px 0 4px; }
+  .modal input, .modal select { width:100%; padding:10px 12px; }
+  .checks { display:flex; flex-wrap:wrap; gap:8px; }
+  .modal label.chip { display:flex; align-items:center; gap:6px; margin:0; padding:7px 12px; border:1px solid var(--border); border-radius:20px; font-size:13px; color:var(--text); cursor:pointer; user-select:none; }
+  .modal label.chip:has(input:checked) { border-color:var(--accent); background:var(--tag-bg); color:var(--tag-text); }
+  .modal .checks input { width:auto; padding:0; accent-color:var(--accent); }
+  .modal .actions { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:10px 18px; border-radius:8px; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:40; }
+  .toast.show { opacity:1; transform:translateX(-50%); }
+  .scrim { display:none; }
+  @media (max-width:760px) {
+    .sidebar { position:fixed; inset:0 auto 0 0; transform:translateX(-100%); }
+    .sidebar.open { transform:none; }
+    .scrim.show { display:block; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:15; }
+    .menu-btn { display:inline-block; }
+    .topbar { padding:10px 14px; }
+    .content { padding:28px 14px; }
+  }
+</style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="logo"><h1>UNICO</h1><p>SHEIN Warehouse Portal</p></div>
+    <div class="nav-section" data-i18n="navigation">NAVIGATION</div>
+    <div id="nav"></div>
+    <div class="side-foot">
+      <button id="exportBtn" data-i18n="export">Export</button>
+      <button id="importBtn" data-i18n="import">Import</button>
+      <button id="loginBtn" hidden></button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" data-i18n-ph="search">
+      </div>
+      <select id="fProcess"></select>
+      <select id="langSelect">
+        <option value="en">English</option>
+        <option value="pl">Polski</option>
+        <option value="uk">Українська</option>
+        <option value="ru">Русский</option>
+      </select>
+      <button class="icon-btn" id="themeBtn" aria-label="Theme">🌙</button>
+      <button class="btn primary" id="addBtn" data-i18n="add">+ Add Document</button>
+    </div>
+    <div class="banner" id="banner" hidden></div>
+    <div class="content" id="content"></div>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h3 id="mHead" data-i18n="addTitle">Add Document</h3>
+      <label data-i18n="lblName">Title</label>
+      <input type="text" id="mTitle" maxlength="120">
+      <label data-i18n="lblLink">Link (URL)</label>
+      <input type="text" id="mUrl" placeholder="https://...">
+      <label data-i18n="lblSection">Section</label>
+      <select id="mSection"></select>
+      <label data-i18n="lblProcess">Process</label>
+      <div class="checks" id="mProcess"></div>
+      <div class="actions">
+        <button class="btn" id="mCancel" data-i18n="cancel">Cancel</button>
+        <button class="btn primary" id="mSave" data-i18n="save">Save</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="overlay2">
+    <div class="modal">
+      <h3 data-i18n="loginTitle">Admin login</h3>
+      <label data-i18n="email">Email</label>
+      <input type="email" id="lEmail" autocomplete="username">
+      <label data-i18n="password">Password</label>
+      <input type="password" id="lPass" autocomplete="current-password">
+      <div class="actions">
+        <button class="btn" id="lCancel" data-i18n="cancel">Cancel</button>
+        <button class="btn primary" id="lSubmit" data-i18n="loginBtn">Log in</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+const ICONS = {
+  wi:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  sop:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  opl:'<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/>',
+  s5:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  training:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  checklists:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  audit:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  formatki:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>'
+};
+const TABS = ['wi','sop','opl','s5','training','checklists','audit','formatki'];
+const PROCESS_KEYS = ['pick','putaway','consolidation','abnormal','other'];
+
+const I18N = {
+  en: {
+    navigation:'NAVIGATION', editTitle:'Edit document', editTip:'Edit', updated:'Document updated', login:'🔒 Admin login', logout:'🔓 Log out', loginBtn:'Log in', loginTitle:'Admin login', email:'Email', password:'Password', loginErr:'Wrong email or password', loggedIn:'Logged in as admin', permErr:'No permission or no connection', loadErr:'Could not connect to the database', emptyView:'No documents yet.', localMode:'⚠ Firebase is not connected: data is stored only in this browser.', search:'Search documents, SOPs, WI...', add:'+ Add Document',
+    allProcesses:'All Processes', export:'⬇ Export', import:'⬆ Import',
+    addTitle:'Add Document', lblName:'Title', lblLink:'Link (URL)', lblSection:'Section', lblProcess:'Process',
+    cancel:'Cancel', save:'Save', open:'Open', del:'Delete', confirmDel:'Delete this document?',
+    empty:'No documents yet. Click “+ Add Document” to<br>add your first link.', noResults:'Nothing found.',
+    errFill:'Please enter a title and a valid link.', saved:'Document added', deleted:'Document deleted',
+    imported:'Imported documents: ', importErr:'Invalid file', themeTo:'Switch theme',
+    processes:{pick:'Pick',putaway:'Putaway',consolidation:'Consolidation',abnormal:'Abnormal',other:'Other'},
+    tabs:{
+      wi:['Work Instructions','Detailed step-by-step working standards and visual guidance.'],
+      sop:['Standard Operating Procedures (SOP)','Official process documentation.'],
+      opl:['One Point Lesson (OPL)','Short single-topic lessons for quick learning.'],
+      s5:['5S','5S methodology and visual management.'],
+      training:['Training','Training and on-the-job materials.'],
+      checklists:['Checklists','Daily and periodic checklists.'],
+      audit:['Audit','Internal and external audit records.'],
+      formatki:['Formatki','Forms and templates.']
+    }
+  },
+  pl: {
+    navigation:'NAWIGACJA', editTitle:'Edytuj dokument', editTip:'Edytuj', updated:'Dokument zaktualizowany', login:'🔒 Logowanie admina', logout:'🔓 Wyloguj', loginBtn:'Zaloguj', loginTitle:'Logowanie admina', email:'E-mail', password:'Hasło', loginErr:'Błędny e-mail lub hasło', loggedIn:'Zalogowano jako admin', permErr:'Brak uprawnień lub połączenia', loadErr:'Nie można połączyć z bazą danych', emptyView:'Brak dokumentów.', localMode:'⚠ Firebase nie jest podłączony: dane są zapisane tylko w tej przeglądarce.', search:'Szukaj dokumentów, SOP, WI...', add:'+ Dodaj dokument',
+    allProcesses:'Wszystkie procesy', export:'⬇ Eksport', import:'⬆ Import',
+    addTitle:'Dodaj dokument', lblName:'Tytuł', lblLink:'Link (URL)', lblSection:'Sekcja', lblProcess:'Proces',
+    cancel:'Anuluj', save:'Zapisz', open:'Otwórz', del:'Usuń', confirmDel:'Usunąć ten dokument?',
+    empty:'Brak dokumentów. Kliknij „+ Dodaj dokument”,<br>aby dodać pierwszy link.', noResults:'Nic nie znaleziono.',
+    errFill:'Podaj tytuł i poprawny link.', saved:'Dokument dodany', deleted:'Dokument usunięty',
+    imported:'Zaimportowano dokumentów: ', importErr:'Nieprawidłowy plik', themeTo:'Zmień motyw',
+    processes:{pick:'Pick',putaway:'Putaway',consolidation:'Konsolidacja',abnormal:'Abnormal',other:'Inne'},
+    tabs:{
+      wi:['Instrukcje pracy','Szczegółowe standardy pracy krok po kroku i wskazówki wizualne.'],
+      sop:['Standardowe procedury operacyjne (SOP)','Oficjalna dokumentacja procesów.'],
+      opl:['Lekcja jednego punktu (OPL)','Krótkie lekcje na jeden temat do szybkiej nauki.'],
+      s5:['5S','Metodyka 5S i zarządzanie wizualne.'],
+      training:['Szkolenia','Materiały szkoleniowe i OJT.'],
+      checklists:['Listy kontrolne','Codzienne i okresowe listy kontrolne.'],
+      audit:['Audyt','Raporty z audytów wewnętrznych i zewnętrznych.'],
+      formatki:['Formatki','Formularze i szablony.']
+    }
+  },
+  uk: {
+    navigation:'НАВІГАЦІЯ', editTitle:'Редагувати документ', editTip:'Редагувати', updated:'Документ оновлено', login:'🔒 Вхід адміна', logout:'🔓 Вийти', loginBtn:'Увійти', loginTitle:'Вхід адміна', email:'Email', password:'Пароль', loginErr:'Невірний email або пароль', loggedIn:'Ви увійшли як адмін', permErr:'Немає прав або немає зʼєднання', loadErr:'Не вдалося підключитися до бази даних', emptyView:'Документів поки немає.', localMode:'⚠ Firebase не підключено: дані зберігаються лише в цьому браузері.', search:'Пошук документів, SOP, WI...', add:'+ Додати документ',
+    allProcesses:'Усі процеси', export:'⬇ Експорт', import:'⬆ Імпорт',
+    addTitle:'Додати документ', lblName:'Назва', lblLink:'Посилання (URL)', lblSection:'Розділ', lblProcess:'Процес',
+    cancel:'Скасувати', save:'Зберегти', open:'Відкрити', del:'Видалити', confirmDel:'Видалити цей документ?',
+    empty:'Документів поки немає. Натисніть «+ Додати документ»,<br>щоб додати перше посилання.', noResults:'Нічого не знайдено.',
+    errFill:'Введіть назву та коректне посилання.', saved:'Документ додано', deleted:'Документ видалено',
+    imported:'Імпортовано документів: ', importErr:'Некоректний файл', themeTo:'Змінити тему',
+    processes:{pick:'Pick',putaway:'Putaway',consolidation:'Консолідація',abnormal:'Abnormal',other:'Інше'},
+    tabs:{
+      wi:['Робочі інструкції','Детальні покрокові стандарти роботи та візуальні підказки.'],
+      sop:['Стандартні операційні процедури (SOP)','Офіційна документація процесів.'],
+      opl:['Урок однієї точки (OPL)','Короткі уроки з однієї теми для швидкого навчання.'],
+      s5:['5S','Методологія 5S та візуальний менеджмент.'],
+      training:['Навчання','Навчальні матеріали та OJT.'],
+      checklists:['Чек-листи','Щоденні та періодичні чек-листи.'],
+      audit:['Аудит','Звіти внутрішніх і зовнішніх аудитів.'],
+      formatki:['Форматки','Форми та шаблони.']
+    }
+  },
+  ru: {
+    navigation:'НАВИГАЦИЯ', editTitle:'Редактировать документ', editTip:'Редактировать', updated:'Документ обновлён', login:'🔒 Вход админа', logout:'🔓 Выйти', loginBtn:'Войти', loginTitle:'Вход админа', email:'Email', password:'Пароль', loginErr:'Неверный email или пароль', loggedIn:'Вы вошли как админ', permErr:'Нет прав или нет соединения', loadErr:'Не удалось подключиться к базе данных', emptyView:'Документов пока нет.', localMode:'⚠ Firebase не подключён: данные хранятся только в этом браузере.', search:'Поиск документов, SOP, WI...', add:'+ Добавить документ',
+    allProcesses:'Все процессы', export:'⬇ Экспорт', import:'⬆ Импорт',
+    addTitle:'Добавить документ', lblName:'Название', lblLink:'Ссылка (URL)', lblSection:'Раздел', lblProcess:'Процесс',
+    cancel:'Отмена', save:'Сохранить', open:'Открыть', del:'Удалить', confirmDel:'Удалить этот документ?',
+    empty:'Документов пока нет. Нажмите «+ Добавить документ»,<br>чтобы добавить первую ссылку.', noResults:'Ничего не найдено.',
+    errFill:'Введите название и корректную ссылку.', saved:'Документ добавлен', deleted:'Документ удалён',
+    imported:'Импортировано документов: ', importErr:'Некорректный файл', themeTo:'Сменить тему',
+    processes:{pick:'Pick',putaway:'Putaway',consolidation:'Консолидация',abnormal:'Abnormal',other:'Другое'},
+    tabs:{
+      wi:['Рабочие инструкции','Подробные пошаговые стандарты работы и визуальные подсказки.'],
+      sop:['Стандартные операционные процедуры (SOP)','Официальная документация процессов.'],
+      opl:['Урок одной точки (OPL)','Короткие уроки по одной теме для быстрого обучения.'],
+      s5:['5S','Методология 5S и визуальный менеджмент.'],
+      training:['Обучение','Обучающие материалы и OJT.'],
+      checklists:['Чек-листы','Ежедневные и периодические чек-листы.'],
+      audit:['Аудит','Отчёты внутренних и внешних аудитов.'],
+      formatki:['Форматки','Формы и шаблоны.']
+    }
+  }
+};
+
+// ---- storage ----
+const load = (k, f) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (e) { return f; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+
+// Firebase settings are loaded from config.js (FIREBASE_CONFIG)
+const FB_ON = typeof FIREBASE_CONFIG !== 'undefined' && !String(FIREBASE_CONFIG.apiKey).startsWith('PASTE');
+let fb = null, isAdmin = false, editingId = null;
+const canEdit = () => !FB_ON || isAdmin;
+
+let lang = load('unico_lang', null);
+if (!I18N[lang]) { const b = (navigator.language || 'en').slice(0, 2); lang = I18N[b] ? b : 'en'; }
+let theme = load('unico_theme', null) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+let current = load('unico_tab', 'wi');
+if (!TABS.includes(current)) current = 'wi';
+function normProcs(d) {
+  const a = (Array.isArray(d.processes) ? d.processes : [d.process]).filter(k => PROCESS_KEYS.includes(k));
+  return a.length ? [...new Set(a)] : ['other'];
+}
+let docs = (FB_ON ? [] : load('unico_docs', [])).map(d => { const { process, ...rest } = d; return { ...rest, processes: normProcs(d) }; });
+const t = () => I18N[lang];
+
+async function addRecord(d) {
+  if (FB_ON) await fb.F.addDoc(fb.col, d);
+  else { docs.push({ id: Date.now() + Math.random().toString(36).slice(2, 6), ...d }); save('unico_docs', docs); }
+}
+async function updateRecord(id, data) {
+  if (FB_ON) await fb.F.updateDoc(fb.F.doc(fb.db, 'documents', id), data);
+  else { docs = docs.map(d => d.id === id ? { ...d, ...data } : d); save('unico_docs', docs); }
+}
+async function removeRecord(id) {
+  if (FB_ON) await fb.F.deleteDoc(fb.F.doc(fb.db, 'documents', id));
+  else { docs = docs.filter(i => i.id !== id); save('unico_docs', docs); }
+}
+async function initFirebase() {
+  const V = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const [A, F, Au] = await Promise.all([import(V + 'firebase-app.js'), import(V + 'firebase-firestore.js'), import(V + 'firebase-auth.js')]);
+  const app = A.initializeApp(FIREBASE_CONFIG), db = F.getFirestore(app), auth = Au.getAuth(app);
+  fb = { F, Au, db, auth, col: F.collection(db, 'documents') };
+  F.onSnapshot(fb.col, snap => {
+    docs = snap.docs.map(x => { const d = x.data(); return { ...d, id: x.id, created: +d.created || 0, processes: normProcs(d) }; });
+    render();
+  }, () => toast(t().loadErr));
+  Au.onAuthStateChanged(auth, u => { isAdmin = !!u; render(); });
+}
+function updateUI() {
+  $('addBtn').hidden = !canEdit();
+  $('importBtn').hidden = !canEdit();
+  $('loginBtn').hidden = !FB_ON;
+  $('loginBtn').textContent = isAdmin ? t().logout : t().login;
+  $('banner').hidden = FB_ON;
+  $('banner').textContent = t().localMode;
+}
+function toast(msg) { const el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toast.id); toast.id = setTimeout(() => el.classList.remove('show'), 2200); }
+function setTheme(th) { theme = th; document.documentElement.dataset.theme = th; $('themeBtn').textContent = th === 'dark' ? '☀️' : '🌙'; save('unico_theme', th); }
+
+// ---- build ----
+function buildNav() {
+  $('nav').innerHTML = '';
+  TABS.forEach(key => {
+    const el = document.createElement('div');
+    el.className = 'nav-item' + (key === current ? ' active' : '');
+    el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' + ICONS[key] + '</svg><span class="name"></span><span class="badge"></span>';
+    el.querySelector('.name').textContent = t().tabs[key][0];
+    el.querySelector('.badge').textContent = docs.filter(d => d.section === key).length;
+    el.addEventListener('click', () => { current = key; save('unico_tab', key); closeMenu(); render(); });
+    $('nav').appendChild(el);
+  });
+}
+function buildPages() {
+  $('content').innerHTML = '';
+  TABS.forEach(key => {
+    const p = document.createElement('div');
+    p.className = 'page' + (key === current ? ' active' : '');
+    p.id = 'page-' + key;
+    p.innerHTML = '<h2></h2><p class="subtitle"></p><div class="list"></div>';
+    p.querySelector('h2').textContent = t().tabs[key][0];
+    p.querySelector('.subtitle').textContent = t().tabs[key][1];
+    $('content').appendChild(p);
+  });
+}
+function fillSelect(sel, first, keys, dict) {
+  const prev = sel.value;
+  sel.innerHTML = '';
+  if (first !== null) sel.add(new Option(first, ''));
+  keys.forEach(k => sel.add(new Option(dict[k], k)));
+  if (prev) sel.value = prev;
+}
+function buildChecks() {
+  const box = $('mProcess');
+  const prev = [...box.querySelectorAll('input:checked')].map(i => i.value);
+  box.innerHTML = '';
+  PROCESS_KEYS.forEach(k => {
+    const l = document.createElement('label'); l.className = 'chip';
+    const i = document.createElement('input'); i.type = 'checkbox'; i.value = k; i.checked = prev.includes(k);
+    l.append(i, document.createTextNode(t().processes[k])); box.appendChild(l);
+  });
+}
+const getProcs = () => { const v = [...$('mProcess').querySelectorAll('input:checked')].map(i => i.value); return v.length ? v : ['other']; };
+function applyI18n() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t()[el.dataset.i18n]);
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t()[el.dataset.i18nPh]);
+  $('themeBtn').title = t().themeTo;
+  fillSelect($('fProcess'), t().allProcesses, PROCESS_KEYS, t().processes);
+  buildChecks();
+  const names = {}; TABS.forEach(k => names[k] = t().tabs[k][0]);
+  fillSelect($('mSection'), null, TABS, names);
+  $('mSection').value = current;
+}
+function renderList() {
+  const q = $('searchInput').value.trim().toLowerCase(), fp = $('fProcess').value;
+  const list = document.querySelector('#page-' + current + ' .list');
+  list.innerHTML = '';
+  const all = docs.filter(d => d.section === current).sort((a, b) => b.created - a.created);
+  const shown = all.filter(d => (!q || d.title.toLowerCase().includes(q) || d.url.toLowerCase().includes(q)) && (!fp || d.processes.includes(fp)));
+  if (!shown.length) {
+    const box = document.createElement('div'); box.className = 'empty-box';
+    box.innerHTML = all.length ? t().noResults : (canEdit() ? t().empty : t().emptyView);
+    list.appendChild(box); return;
+  }
+  shown.forEach(d => {
+    const c = document.createElement('div'); c.className = 'card';
+    const info = document.createElement('div'); info.className = 'info';
+    const title = document.createElement('div'); title.className = 'title'; title.textContent = d.title;
+    const url = document.createElement('div'); url.className = 'url'; url.textContent = d.url;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    d.processes.forEach(k => { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = t().processes[k] || k; meta.append(tg); });
+    info.append(title, url, meta);
+    const a = document.createElement('a'); a.className = 'open'; a.href = d.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = t().open + ' ↗';
+    const ed = document.createElement('button'); ed.className = 'del edit'; ed.title = t().editTip; ed.textContent = '✎'; ed.addEventListener('click', () => openModal(d));
+    const x = document.createElement('button'); x.className = 'del'; x.title = t().del; x.textContent = '×';
+    x.addEventListener('click', async () => { if (!confirm(t().confirmDel)) return; try { await removeRecord(d.id); toast(t().deleted); render(); } catch (err) { toast(t().permErr); } });
+    c.append(info, a); if (canEdit()) c.append(ed, x); list.appendChild(c);
+  });
+}
+function render() { buildNav(); buildPages(); applyI18n(); renderList(); updateUI(); }
+
+// ---- events ----
+const openMenu = () => { $('sidebar').classList.add('open'); $('scrim').classList.add('show'); };
+const closeMenu = () => { $('sidebar').classList.remove('open'); $('scrim').classList.remove('show'); };
+$('menuBtn').onclick = openMenu; $('scrim').onclick = closeMenu;
+$('themeBtn').onclick = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+$('langSelect').value = lang;
+$('langSelect').onchange = e => { lang = e.target.value; save('unico_lang', lang); render(); };
+$('searchInput').addEventListener('input', renderList);
+$('fProcess').addEventListener('change', renderList);
+
+const closeModal = () => $('overlay').classList.remove('show');
+function openModal(d) {
+  editingId = d ? d.id : null;
+  $('mHead').textContent = d ? t().editTitle : t().addTitle;
+  $('mTitle').value = d ? d.title : ''; $('mUrl').value = d ? d.url : '';
+  $('mSection').value = d ? d.section : current;
+  $('mProcess').querySelectorAll('input').forEach(i => i.checked = !!d && d.processes.includes(i.value));
+  $('overlay').classList.add('show'); $('mTitle').focus();
+}
+$('addBtn').onclick = () => openModal(null);
+$('mCancel').onclick = closeModal;
+$('overlay').onclick = e => { if (e.target === $('overlay')) closeModal(); };
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeMenu(); $('overlay2').classList.remove('show'); }
+  if (e.key === 'Enter' && $('overlay2').classList.contains('show') && e.target.tagName === 'INPUT') $('lSubmit').click();
+  if (e.key === 'Enter' && $('overlay').classList.contains('show') && e.target.tagName === 'INPUT') $('mSave').click();
+});
+$('mSave').onclick = async () => {
+  const title = $('mTitle').value.trim(); let url = $('mUrl').value.trim();
+  if (url && !/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
+  if (!title || !/^https?:\/\/[^\s]+\.[^\s]+/i.test(url)) { alert(t().errFill); return; }
+  const rec = { title, url, section: $('mSection').value, processes: getProcs() };
+  const wasEdit = !!editingId;
+  try { if (wasEdit) await updateRecord(editingId, rec); else await addRecord({ created: Date.now(), ...rec }); } catch (err) { toast(t().permErr); return; }
+  editingId = null;
+  closeModal(); current = $('mSection').value; save('unico_tab', current); render(); toast(wasEdit ? t().updated : t().saved);
+};
+
+// backup
+$('exportBtn').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(docs, null, 2)], { type: 'application/json' }));
+  a.download = 'unico_documents_' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const arr = JSON.parse(r.result); if (!Array.isArray(arr)) throw 0;
+      let n = 0;
+      for (const d of arr) {
+        if (d && typeof d.title === 'string' && /^https?:\/\//i.test(d.url) && TABS.includes(d.section) && !docs.some(x => x.url === d.url && x.section === d.section)) {
+          await addRecord({ created: +d.created || Date.now(), title: d.title.slice(0, 120), url: d.url, section: d.section, processes: normProcs(d) });
+          n++;
+        }
+      }
+      render(); toast(t().imported + n);
+    } catch (err) { toast(t().importErr); }
+  };
+  r.readAsText(f); e.target.value = '';
+};
+
+// admin login
+$('loginBtn').onclick = async () => {
+  if (!fb) return;
+  if (isAdmin) { await fb.Au.signOut(fb.auth); return; }
+  $('lEmail').value = ''; $('lPass').value = ''; $('overlay2').classList.add('show'); $('lEmail').focus();
+};
+$('lCancel').onclick = () => $('overlay2').classList.remove('show');
+$('lSubmit').onclick = async () => {
+  try { await fb.Au.signInWithEmailAndPassword(fb.auth, $('lEmail').value.trim(), $('lPass').value); $('overlay2').classList.remove('show'); toast(t().loggedIn); }
+  catch (err) { toast(t().loginErr); }
+};
+
+setTheme(theme);
+render();
+if (FB_ON) initFirebase().catch(() => toast(t().loadErr));
+</script>
+</body>
+</html>
