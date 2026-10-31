@@ -192,10 +192,11 @@ const ICONS = {
   checklists:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
   audit:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
   reports:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+  bhp:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
   other:'<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="8.01" y2="12"/><line x1="12" y1="12" x2="12.01" y2="12"/><line x1="16" y1="12" x2="16.01" y2="12"/>',
   formatki:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>'
 };
-const TABS = ['sop','opl','s5','training','checklists','audit','reports','formatki','other'];
+const TABS = ['sop','opl','s5','bhp','training','checklists','audit','reports','formatki','other'];
 const PROCESS_KEYS = ['pick','putaway','consolidation','abnormal','other'];
 
 const I18N = {
@@ -212,6 +213,7 @@ const I18N = {
       sop:['Standard Operating Procedures (SOP)','Official process documentation.'],
       opl:['One Point Lesson (OPL)','Short single-topic lessons for quick learning.'],
       s5:['5S','5S methodology and visual management.'],
+      bhp:['BHP & Fire Safety','Health and safety, fire protection, evacuation and emergency procedures.'],
       training:['Training','Training and on-the-job materials.'],
       checklists:['Checklists','Daily and periodic checklists.'],
       audit:['Audit','Internal and external audit records.'],
@@ -233,6 +235,7 @@ const I18N = {
       sop:['Standardowe procedury operacyjne (SOP)','Oficjalna dokumentacja procesów.'],
       opl:['Lekcja jednego punktu (OPL)','Krótkie lekcje na jeden temat do szybkiej nauki.'],
       s5:['5S','Metodyka 5S i zarządzanie wizualne.'],
+      bhp:['BHP i PPOŻ','Bezpieczeństwo i higiena pracy, ochrona przeciwpożarowa, ewakuacja i procedury awaryjne.'],
       training:['Szkolenia','Materiały szkoleniowe i OJT.'],
       checklists:['Listy kontrolne','Codzienne i okresowe listy kontrolne.'],
       audit:['Audyt','Raporty z audytów wewnętrznych i zewnętrznych.'],
@@ -254,6 +257,7 @@ const I18N = {
       sop:['Стандартні операційні процедури (SOP)','Офіційна документація процесів.'],
       opl:['Урок однієї точки (OPL)','Короткі уроки з однієї теми для швидкого навчання.'],
       s5:['5S','Методологія 5S та візуальний менеджмент.'],
+      bhp:['BHP і пожежна безпека','Охорона праці, пожежна безпека, евакуація та аварійні процедури.'],
       training:['Навчання','Навчальні матеріали та OJT.'],
       checklists:['Чек-листи','Щоденні та періодичні чек-листи.'],
       audit:['Аудит','Звіти внутрішніх і зовнішніх аудитів.'],
@@ -275,6 +279,7 @@ const I18N = {
       sop:['Стандартные операционные процедуры (SOP)','Официальная документация процессов.'],
       opl:['Урок одной точки (OPL)','Короткие уроки по одной теме для быстрого обучения.'],
       s5:['5S','Методология 5S и визуальный менеджмент.'],
+      bhp:['BHP и пожарная безопасность','Охрана труда, пожарная безопасность, эвакуация и аварийные процедуры.'],
       training:['Обучение','Обучающие материалы и OJT.'],
       checklists:['Чек-листы','Ежедневные и периодические чек-листы.'],
       audit:['Аудит','Отчёты внутренних и внешних аудитов.'],
