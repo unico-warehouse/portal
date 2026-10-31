@@ -66,6 +66,14 @@
   .tag.gray { background:var(--tag2-bg); color:var(--tag2-text); }
   .card a.open { color:var(--accent); font-weight:600; font-size:13px; text-decoration:none; white-space:nowrap; }
   .card a.open:hover { text-decoration:underline; }
+  .card button.open { background:none; border:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .card button.open:hover { text-decoration:underline; }
+  .linkrow { display:flex; gap:8px; }
+  .modal .linkrow input:first-child { flex:0 0 34%; width:auto; }
+  .modal .linkrow input:last-child { flex:1; width:auto; min-width:0; }
+  .hint { font-size:12px; color:var(--faint); margin-top:6px; }
+  #chooseList .btn { display:block; width:100%; text-align:left; margin-top:8px; padding:12px 14px; }
+  #chooseList small { display:block; color:var(--faint); font-size:12px; margin-top:2px; font-weight:400; }
   .card .del { background:none; border:none; color:var(--faint); font-size:22px; cursor:pointer; line-height:1; }
   .card .del:hover { color:#e53935; }
   .card .edit { font-size:17px; }
@@ -135,7 +143,13 @@
       <label data-i18n="lblName">Title</label>
       <input type="text" id="mTitle" maxlength="120">
       <label data-i18n="lblLink">Link (URL)</label>
-      <input type="text" id="mUrl" placeholder="https://...">
+      <div class="linkrow"><input type="text" id="mLabel1" maxlength="40" data-i18n-ph="phLabel"><input type="text" id="mUrl" placeholder="https://..."></div>
+      <button type="button" class="btn" id="addLink2" style="margin-top:10px"></button>
+      <div id="link2box" hidden>
+        <label data-i18n="lblLink2">Second link (URL)</label>
+        <div class="linkrow"><input type="text" id="mLabel2" maxlength="40" data-i18n-ph="phLabel"><input type="text" id="mUrl2" placeholder="https://..."></div>
+        <div class="hint" data-i18n="hint2"></div>
+      </div>
       <label data-i18n="lblSection">Section</label>
       <select id="mSection"></select>
       <label data-i18n="lblProcess">Process</label>
@@ -159,26 +173,33 @@
       </div>
     </div>
   </div>
+  <div class="overlay" id="overlay3">
+    <div class="modal">
+      <h3 data-i18n="chooseTitle">Which link to open?</h3>
+      <div id="chooseList"></div>
+      <div class="actions"><button class="btn" id="cCancel" data-i18n="cancel">Cancel</button></div>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
 <script>
 const ICONS = {
-  wi:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
   sop:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
   opl:'<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/>',
   s5:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
   training:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   checklists:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
   audit:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  other:'<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="8.01" y2="12"/><line x1="12" y1="12" x2="12.01" y2="12"/><line x1="16" y1="12" x2="16.01" y2="12"/>',
   formatki:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>'
 };
-const TABS = ['wi','sop','opl','s5','training','checklists','audit','formatki'];
+const TABS = ['sop','opl','s5','training','checklists','audit','formatki','other'];
 const PROCESS_KEYS = ['pick','putaway','consolidation','abnormal','other'];
 
 const I18N = {
   en: {
-    navigation:'NAVIGATION', editTitle:'Edit document', editTip:'Edit', updated:'Document updated', login:'🔒 Admin login', logout:'🔓 Log out', loginBtn:'Log in', loginTitle:'Admin login', email:'Email', password:'Password', loginErr:'Wrong email or password', loggedIn:'Logged in as admin', permErr:'No permission or no connection', loadErr:'Could not connect to the database', emptyView:'No documents yet.', localMode:'⚠ Firebase is not connected: data is stored only in this browser.', search:'Search documents, SOPs, WI...', add:'+ Add Document',
+    navigation:'NAVIGATION', phLabel:'Name (optional)', lblLink2:'Second link (URL)', addLink2:'+ Add second link', removeLink2:'✕ Remove second link', hint2:'With two links, you will be asked which one to open.', chooseTitle:'Which link to open?', linkWord:'Link', editTitle:'Edit document', editTip:'Edit', updated:'Document updated', login:'🔒 Admin login', logout:'🔓 Log out', loginBtn:'Log in', loginTitle:'Admin login', email:'Email', password:'Password', loginErr:'Wrong email or password', loggedIn:'Logged in as admin', permErr:'No permission or no connection', loadErr:'Could not connect to the database', emptyView:'No documents yet.', localMode:'⚠ Firebase is not connected: data is stored only in this browser.', search:'Search documents, SOPs, WI...', add:'+ Add Document',
     allProcesses:'All Processes', export:'⬇ Export', import:'⬆ Import',
     addTitle:'Add Document', lblName:'Title', lblLink:'Link (URL)', lblSection:'Section', lblProcess:'Process',
     cancel:'Cancel', save:'Save', open:'Open', del:'Delete', confirmDel:'Delete this document?',
@@ -187,18 +208,18 @@ const I18N = {
     imported:'Imported documents: ', importErr:'Invalid file', themeTo:'Switch theme',
     processes:{pick:'Pick',putaway:'Putaway',consolidation:'Consolidation',abnormal:'Abnormal',other:'Other'},
     tabs:{
-      wi:['Work Instructions','Detailed step-by-step working standards and visual guidance.'],
       sop:['Standard Operating Procedures (SOP)','Official process documentation.'],
       opl:['One Point Lesson (OPL)','Short single-topic lessons for quick learning.'],
       s5:['5S','5S methodology and visual management.'],
       training:['Training','Training and on-the-job materials.'],
       checklists:['Checklists','Daily and periodic checklists.'],
       audit:['Audit','Internal and external audit records.'],
-      formatki:['Formatki','Forms and templates.']
+      formatki:['Formatki','Forms and templates.'],
+      other:['Other','Other documents and materials.']
     }
   },
   pl: {
-    navigation:'NAWIGACJA', editTitle:'Edytuj dokument', editTip:'Edytuj', updated:'Dokument zaktualizowany', login:'🔒 Logowanie admina', logout:'🔓 Wyloguj', loginBtn:'Zaloguj', loginTitle:'Logowanie admina', email:'E-mail', password:'Hasło', loginErr:'Błędny e-mail lub hasło', loggedIn:'Zalogowano jako admin', permErr:'Brak uprawnień lub połączenia', loadErr:'Nie można połączyć z bazą danych', emptyView:'Brak dokumentów.', localMode:'⚠ Firebase nie jest podłączony: dane są zapisane tylko w tej przeglądarce.', search:'Szukaj dokumentów, SOP, WI...', add:'+ Dodaj dokument',
+    navigation:'NAWIGACJA', phLabel:'Nazwa (opcjonalnie)', lblLink2:'Drugi link (URL)', addLink2:'+ Dodaj drugi link', removeLink2:'✕ Usuń drugi link', hint2:'Przy dwóch linkach zapytamy, który otworzyć.', chooseTitle:'Który link otworzyć?', linkWord:'Link', editTitle:'Edytuj dokument', editTip:'Edytuj', updated:'Dokument zaktualizowany', login:'🔒 Logowanie admina', logout:'🔓 Wyloguj', loginBtn:'Zaloguj', loginTitle:'Logowanie admina', email:'E-mail', password:'Hasło', loginErr:'Błędny e-mail lub hasło', loggedIn:'Zalogowano jako admin', permErr:'Brak uprawnień lub połączenia', loadErr:'Nie można połączyć z bazą danych', emptyView:'Brak dokumentów.', localMode:'⚠ Firebase nie jest podłączony: dane są zapisane tylko w tej przeglądarce.', search:'Szukaj dokumentów, SOP, WI...', add:'+ Dodaj dokument',
     allProcesses:'Wszystkie procesy', export:'⬇ Eksport', import:'⬆ Import',
     addTitle:'Dodaj dokument', lblName:'Tytuł', lblLink:'Link (URL)', lblSection:'Sekcja', lblProcess:'Proces',
     cancel:'Anuluj', save:'Zapisz', open:'Otwórz', del:'Usuń', confirmDel:'Usunąć ten dokument?',
@@ -207,18 +228,18 @@ const I18N = {
     imported:'Zaimportowano dokumentów: ', importErr:'Nieprawidłowy plik', themeTo:'Zmień motyw',
     processes:{pick:'Pick',putaway:'Putaway',consolidation:'Konsolidacja',abnormal:'Abnormal',other:'Inne'},
     tabs:{
-      wi:['Instrukcje pracy','Szczegółowe standardy pracy krok po kroku i wskazówki wizualne.'],
       sop:['Standardowe procedury operacyjne (SOP)','Oficjalna dokumentacja procesów.'],
       opl:['Lekcja jednego punktu (OPL)','Krótkie lekcje na jeden temat do szybkiej nauki.'],
       s5:['5S','Metodyka 5S i zarządzanie wizualne.'],
       training:['Szkolenia','Materiały szkoleniowe i OJT.'],
       checklists:['Listy kontrolne','Codzienne i okresowe listy kontrolne.'],
       audit:['Audyt','Raporty z audytów wewnętrznych i zewnętrznych.'],
-      formatki:['Formatki','Formularze i szablony.']
+      formatki:['Formatki','Formularze i szablony.'],
+      other:['Inne','Pozostałe dokumenty i materiały.']
     }
   },
   uk: {
-    navigation:'НАВІГАЦІЯ', editTitle:'Редагувати документ', editTip:'Редагувати', updated:'Документ оновлено', login:'🔒 Вхід адміна', logout:'🔓 Вийти', loginBtn:'Увійти', loginTitle:'Вхід адміна', email:'Email', password:'Пароль', loginErr:'Невірний email або пароль', loggedIn:'Ви увійшли як адмін', permErr:'Немає прав або немає зʼєднання', loadErr:'Не вдалося підключитися до бази даних', emptyView:'Документів поки немає.', localMode:'⚠ Firebase не підключено: дані зберігаються лише в цьому браузері.', search:'Пошук документів, SOP, WI...', add:'+ Додати документ',
+    navigation:'НАВІГАЦІЯ', phLabel:'Назва (необовʼязково)', lblLink2:'Друге посилання (URL)', addLink2:'+ Додати друге посилання', removeLink2:'✕ Прибрати друге посилання', hint2:'Якщо два посилання, перед відкриттям запитаємо, яке відкрити.', chooseTitle:'Яке посилання відкрити?', linkWord:'Посилання', editTitle:'Редагувати документ', editTip:'Редагувати', updated:'Документ оновлено', login:'🔒 Вхід адміна', logout:'🔓 Вийти', loginBtn:'Увійти', loginTitle:'Вхід адміна', email:'Email', password:'Пароль', loginErr:'Невірний email або пароль', loggedIn:'Ви увійшли як адмін', permErr:'Немає прав або немає зʼєднання', loadErr:'Не вдалося підключитися до бази даних', emptyView:'Документів поки немає.', localMode:'⚠ Firebase не підключено: дані зберігаються лише в цьому браузері.', search:'Пошук документів, SOP, WI...', add:'+ Додати документ',
     allProcesses:'Усі процеси', export:'⬇ Експорт', import:'⬆ Імпорт',
     addTitle:'Додати документ', lblName:'Назва', lblLink:'Посилання (URL)', lblSection:'Розділ', lblProcess:'Процес',
     cancel:'Скасувати', save:'Зберегти', open:'Відкрити', del:'Видалити', confirmDel:'Видалити цей документ?',
@@ -227,18 +248,18 @@ const I18N = {
     imported:'Імпортовано документів: ', importErr:'Некоректний файл', themeTo:'Змінити тему',
     processes:{pick:'Pick',putaway:'Putaway',consolidation:'Консолідація',abnormal:'Abnormal',other:'Інше'},
     tabs:{
-      wi:['Робочі інструкції','Детальні покрокові стандарти роботи та візуальні підказки.'],
       sop:['Стандартні операційні процедури (SOP)','Офіційна документація процесів.'],
       opl:['Урок однієї точки (OPL)','Короткі уроки з однієї теми для швидкого навчання.'],
       s5:['5S','Методологія 5S та візуальний менеджмент.'],
       training:['Навчання','Навчальні матеріали та OJT.'],
       checklists:['Чек-листи','Щоденні та періодичні чек-листи.'],
       audit:['Аудит','Звіти внутрішніх і зовнішніх аудитів.'],
-      formatki:['Форматки','Форми та шаблони.']
+      formatki:['Форматки','Форми та шаблони.'],
+      other:['Інше','Інші документи та матеріали.']
     }
   },
   ru: {
-    navigation:'НАВИГАЦИЯ', editTitle:'Редактировать документ', editTip:'Редактировать', updated:'Документ обновлён', login:'🔒 Вход админа', logout:'🔓 Выйти', loginBtn:'Войти', loginTitle:'Вход админа', email:'Email', password:'Пароль', loginErr:'Неверный email или пароль', loggedIn:'Вы вошли как админ', permErr:'Нет прав или нет соединения', loadErr:'Не удалось подключиться к базе данных', emptyView:'Документов пока нет.', localMode:'⚠ Firebase не подключён: данные хранятся только в этом браузере.', search:'Поиск документов, SOP, WI...', add:'+ Добавить документ',
+    navigation:'НАВИГАЦИЯ', phLabel:'Название (необязательно)', lblLink2:'Вторая ссылка (URL)', addLink2:'+ Добавить вторую ссылку', removeLink2:'✕ Убрать вторую ссылку', hint2:'Если две ссылки, при открытии спросим, какую открыть.', chooseTitle:'Какую ссылку открыть?', linkWord:'Ссылка', editTitle:'Редактировать документ', editTip:'Редактировать', updated:'Документ обновлён', login:'🔒 Вход админа', logout:'🔓 Выйти', loginBtn:'Войти', loginTitle:'Вход админа', email:'Email', password:'Пароль', loginErr:'Неверный email или пароль', loggedIn:'Вы вошли как админ', permErr:'Нет прав или нет соединения', loadErr:'Не удалось подключиться к базе данных', emptyView:'Документов пока нет.', localMode:'⚠ Firebase не подключён: данные хранятся только в этом браузере.', search:'Поиск документов, SOP, WI...', add:'+ Добавить документ',
     allProcesses:'Все процессы', export:'⬇ Экспорт', import:'⬆ Импорт',
     addTitle:'Добавить документ', lblName:'Название', lblLink:'Ссылка (URL)', lblSection:'Раздел', lblProcess:'Процесс',
     cancel:'Отмена', save:'Сохранить', open:'Открыть', del:'Удалить', confirmDel:'Удалить этот документ?',
@@ -247,14 +268,14 @@ const I18N = {
     imported:'Импортировано документов: ', importErr:'Некорректный файл', themeTo:'Сменить тему',
     processes:{pick:'Pick',putaway:'Putaway',consolidation:'Консолидация',abnormal:'Abnormal',other:'Другое'},
     tabs:{
-      wi:['Рабочие инструкции','Подробные пошаговые стандарты работы и визуальные подсказки.'],
       sop:['Стандартные операционные процедуры (SOP)','Официальная документация процессов.'],
       opl:['Урок одной точки (OPL)','Короткие уроки по одной теме для быстрого обучения.'],
       s5:['5S','Методология 5S и визуальный менеджмент.'],
       training:['Обучение','Обучающие материалы и OJT.'],
       checklists:['Чек-листы','Ежедневные и периодические чек-листы.'],
       audit:['Аудит','Отчёты внутренних и внешних аудитов.'],
-      formatki:['Форматки','Формы и шаблоны.']
+      formatki:['Форматки','Формы и шаблоны.'],
+      other:['Другое','Прочие документы и материалы.']
     }
   }
 };
@@ -272,13 +293,19 @@ const canEdit = () => !FB_ON || isAdmin;
 let lang = load('unico_lang', null);
 if (!I18N[lang]) { const b = (navigator.language || 'en').slice(0, 2); lang = I18N[b] ? b : 'en'; }
 let theme = load('unico_theme', null) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-let current = load('unico_tab', 'wi');
-if (!TABS.includes(current)) current = 'wi';
+let current = load('unico_tab', 'sop');
+if (!TABS.includes(current)) current = 'sop';
+function normLinks(d) {
+  const a = Array.isArray(d.links) ? d.links.filter(l => l && typeof l.url === 'string' && /^https?:\/\//i.test(l.url)).slice(0, 2).map(l => ({ label: String(l.label || '').slice(0, 40), url: l.url })) : [];
+  return a.length ? a : [{ label: '', url: d.url }];
+}
+const fixUrl = u => { u = u.trim(); return u && !/^[a-z][a-z0-9+.-]*:/i.test(u) ? 'https://' + u : u; };
+const okUrl = u => /^https?:\/\/[^\s]+\.[^\s]+/i.test(u);
 function normProcs(d) {
   const a = (Array.isArray(d.processes) ? d.processes : [d.process]).filter(k => PROCESS_KEYS.includes(k));
   return a.length ? [...new Set(a)] : ['other'];
 }
-let docs = (FB_ON ? [] : load('unico_docs', [])).map(d => { const { process, ...rest } = d; return { ...rest, processes: normProcs(d) }; });
+let docs = (FB_ON ? [] : load('unico_docs', [])).map(d => { const { process, ...rest } = d; return { ...rest, processes: normProcs(d), links: normLinks(d), section: TABS.includes(d.section) ? d.section : 'other' }; });
 const t = () => I18N[lang];
 
 async function addRecord(d) {
@@ -299,7 +326,7 @@ async function initFirebase() {
   const app = A.initializeApp(FIREBASE_CONFIG), db = F.getFirestore(app), auth = Au.getAuth(app);
   fb = { F, Au, db, auth, col: F.collection(db, 'documents') };
   F.onSnapshot(fb.col, snap => {
-    docs = snap.docs.map(x => { const d = x.data(); return { ...d, id: x.id, created: +d.created || 0, processes: normProcs(d) }; });
+    docs = snap.docs.map(x => { const d = x.data(); return { ...d, id: x.id, created: +d.created || 0, processes: normProcs(d), links: normLinks(d), section: TABS.includes(d.section) ? d.section : 'other' }; });
     render();
   }, () => toast(t().loadErr));
   Au.onAuthStateChanged(auth, u => { isAdmin = !!u; render(); });
@@ -374,7 +401,7 @@ function renderList() {
   const list = document.querySelector('#page-' + current + ' .list');
   list.innerHTML = '';
   const all = docs.filter(d => d.section === current).sort((a, b) => b.created - a.created);
-  const shown = all.filter(d => (!q || d.title.toLowerCase().includes(q) || d.url.toLowerCase().includes(q)) && (!fp || d.processes.includes(fp)));
+  const shown = all.filter(d => (!q || d.title.toLowerCase().includes(q) || d.links.some(l => (l.label + ' ' + l.url).toLowerCase().includes(q))) && (!fp || d.processes.includes(fp)));
   if (!shown.length) {
     const box = document.createElement('div'); box.className = 'empty-box';
     box.innerHTML = all.length ? t().noResults : (canEdit() ? t().empty : t().emptyView);
@@ -384,11 +411,13 @@ function renderList() {
     const c = document.createElement('div'); c.className = 'card';
     const info = document.createElement('div'); info.className = 'info';
     const title = document.createElement('div'); title.className = 'title'; title.textContent = d.title;
-    const url = document.createElement('div'); url.className = 'url'; url.textContent = d.url;
     const meta = document.createElement('div'); meta.className = 'meta';
     d.processes.forEach(k => { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = t().processes[k] || k; meta.append(tg); });
-    info.append(title, url, meta);
-    const a = document.createElement('a'); a.className = 'open'; a.href = d.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = t().open + ' ↗';
+    info.append(title, meta);
+    let a;
+    if (d.links.length === 1) { a = document.createElement('a'); a.href = d.links[0].url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = t().open + ' ↗'; }
+    else { a = document.createElement('button'); a.textContent = t().open + ' ▾'; a.addEventListener('click', () => chooseLink(d)); }
+    a.className = 'open';
     const ed = document.createElement('button'); ed.className = 'del edit'; ed.title = t().editTip; ed.textContent = '✎'; ed.addEventListener('click', () => openModal(d));
     const x = document.createElement('button'); x.className = 'del'; x.title = t().del; x.textContent = '×';
     x.addEventListener('click', async () => { if (!confirm(t().confirmDel)) return; try { await removeRecord(d.id); toast(t().deleted); render(); } catch (err) { toast(t().permErr); } });
@@ -411,7 +440,10 @@ const closeModal = () => $('overlay').classList.remove('show');
 function openModal(d) {
   editingId = d ? d.id : null;
   $('mHead').textContent = d ? t().editTitle : t().addTitle;
-  $('mTitle').value = d ? d.title : ''; $('mUrl').value = d ? d.url : '';
+  $('mTitle').value = d ? d.title : ''; const L = d ? d.links : [];
+  $('mLabel1').value = L[0] ? L[0].label : ''; $('mUrl').value = L[0] ? L[0].url : '';
+  $('mLabel2').value = L[1] ? L[1].label : ''; $('mUrl2').value = L[1] ? L[1].url : '';
+  setLink2(!!L[1]);
   $('mSection').value = d ? d.section : current;
   $('mProcess').querySelectorAll('input').forEach(i => i.checked = !!d && d.processes.includes(i.value));
   $('overlay').classList.add('show'); $('mTitle').focus();
@@ -420,15 +452,17 @@ $('addBtn').onclick = () => openModal(null);
 $('mCancel').onclick = closeModal;
 $('overlay').onclick = e => { if (e.target === $('overlay')) closeModal(); };
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeMenu(); $('overlay2').classList.remove('show'); }
+  if (e.key === 'Escape') { closeModal(); closeMenu(); $('overlay2').classList.remove('show'); $('overlay3').classList.remove('show'); }
   if (e.key === 'Enter' && $('overlay2').classList.contains('show') && e.target.tagName === 'INPUT') $('lSubmit').click();
   if (e.key === 'Enter' && $('overlay').classList.contains('show') && e.target.tagName === 'INPUT') $('mSave').click();
 });
 $('mSave').onclick = async () => {
-  const title = $('mTitle').value.trim(); let url = $('mUrl').value.trim();
-  if (url && !/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
-  if (!title || !/^https?:\/\/[^\s]+\.[^\s]+/i.test(url)) { alert(t().errFill); return; }
-  const rec = { title, url, section: $('mSection').value, processes: getProcs() };
+  const title = $('mTitle').value.trim();
+  const u1 = fixUrl($('mUrl').value), u2 = $('link2box').hidden ? '' : fixUrl($('mUrl2').value);
+  if (!title || !okUrl(u1) || (u2 && !okUrl(u2))) { alert(t().errFill); return; }
+  const links = [{ label: $('mLabel1').value.trim().slice(0, 40), url: u1 }];
+  if (u2) links.push({ label: $('mLabel2').value.trim().slice(0, 40), url: u2 });
+  const rec = { title, url: u1, links, section: $('mSection').value, processes: getProcs() };
   const wasEdit = !!editingId;
   try { if (wasEdit) await updateRecord(editingId, rec); else await addRecord({ created: Date.now(), ...rec }); } catch (err) { toast(t().permErr); return; }
   editingId = null;
@@ -450,8 +484,8 @@ $('importFile').onchange = e => {
       const arr = JSON.parse(r.result); if (!Array.isArray(arr)) throw 0;
       let n = 0;
       for (const d of arr) {
-        if (d && typeof d.title === 'string' && /^https?:\/\//i.test(d.url) && TABS.includes(d.section) && !docs.some(x => x.url === d.url && x.section === d.section)) {
-          await addRecord({ created: +d.created || Date.now(), title: d.title.slice(0, 120), url: d.url, section: d.section, processes: normProcs(d) });
+        if (d && typeof d.title === 'string' && /^https?:\/\//i.test(d.url) && !docs.some(x => x.url === d.url)) {
+          await addRecord({ created: +d.created || Date.now(), title: d.title.slice(0, 120), url: d.url, links: normLinks(d), section: TABS.includes(d.section) ? d.section : 'other', processes: normProcs(d) });
           n++;
         }
       }
@@ -460,6 +494,24 @@ $('importFile').onchange = e => {
   };
   r.readAsText(f); e.target.value = '';
 };
+
+// second link + link chooser
+function setLink2(show) { $('link2box').hidden = !show; $('addLink2').textContent = show ? t().removeLink2 : t().addLink2; }
+$('addLink2').onclick = () => { setLink2($('link2box').hidden); if (!$('link2box').hidden) $('mUrl2').focus(); };
+function chooseLink(d) {
+  const box = $('chooseList'); box.innerHTML = '';
+  d.links.forEach((l, i) => {
+    const b = document.createElement('button'); b.className = 'btn';
+    b.textContent = l.label || (t().linkWord + ' ' + (i + 1));
+    const sm = document.createElement('small'); try { sm.textContent = new URL(l.url).hostname; } catch (e) { sm.textContent = ''; }
+    b.appendChild(sm);
+    b.onclick = () => { window.open(l.url, '_blank', 'noopener,noreferrer'); $('overlay3').classList.remove('show'); };
+    box.appendChild(b);
+  });
+  $('overlay3').classList.add('show');
+}
+$('cCancel').onclick = () => $('overlay3').classList.remove('show');
+$('overlay3').onclick = e => { if (e.target === $('overlay3')) $('overlay3').classList.remove('show'); };
 
 // admin login
 $('loginBtn').onclick = async () => {
